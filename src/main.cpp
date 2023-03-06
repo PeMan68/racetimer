@@ -2,17 +2,19 @@
 
 long currentLightValue = 0;
 long startLightValue = 0;
-unsigned long startTime;
-unsigned long passedTime;
+unsigned long runningStartTime;
+unsigned long runningPassedTime;
 unsigned long minutes;
 unsigned long seconds;
 unsigned long tenths;
 
 bool running = false;
+bool buttonPressed = false;
+bool buttonPressedLong = false;
+int button = LOW;
+unsigned long buttonPressedStartTime = 0;
 
 int pinStartReset = 2;
-int button = LOW;
-
 int pinLEDGreen = 3;
 int pinLEDYellow = 4;
 int pinLEDRed = 5;
@@ -23,8 +25,10 @@ void rollingSequence();
 void startSequence();
 void redToGreenSequence();
 void greenToRedSequence();
+void buttonPress();
 
-void setup() {
+void setup()
+{
 	pinMode(pinStartReset, INPUT);
 	pinMode(pinLEDGreen, OUTPUT);
 	pinMode(pinLEDYellow, OUTPUT);
@@ -32,6 +36,68 @@ void setup() {
 	Serial.begin(9600); // remove after tests
 }
 
+void buttonPress()
+{
+	if (!buttonPressed)
+	{
+		// button pressed
+		buttonPressed = true;
+		buttonPressedLong = false;
+		buttonPressedStartTime = millis();
+		Serial.println("knapp tryckt");
+	}
+	else
+	{
+		if (!buttonPressedLong && millis() - buttonPressedStartTime > 2000)
+		{
+			// long press
+			buttonPressedLong = true;
+			// buttonPressed = false;
+			if (running)
+			{
+				// race started, just reset
+				Serial.println("Stoppa race, tjuvstart");
+				running = false;
+				greenToRedSequence();
+			}
+			else
+			{
+				// delete previous racetime
+				Serial.println("Radera föregånde racetid");
+			}
+		}
+	}
+}
+
+void loop()
+{
+	button = digitalRead(pinStartReset);
+	if (button == HIGH)
+	{
+		buttonPress();
+	}
+	else
+	{
+
+		if (buttonPressed)
+		{
+			// button released
+			buttonPressed = false;
+			Serial.println("knapp släppt");
+
+			if (!running && !buttonPressedLong)
+			// short press
+			// start new race
+			{
+				Serial.println("Starta nytt race");
+				startSequence();
+				running = true;
+				currentLightValue = analogRead(pinLight);
+				runningStartTime = millis();
+			}
+		}
+	}
+}
 
 void startSequence()
 {
@@ -47,36 +113,33 @@ void startSequence()
 		digitalWrite(pinLEDRed, LOW);
 		delay(500 - i * 100);
 	}
-		redToGreenSequence();
-		delay(2000);
-		greenToRedSequence();
-
+	redToGreenSequence();
 }
 
 void redToGreenSequence()
 {
-		digitalWrite(pinLEDRed, HIGH);
-		digitalWrite(pinLEDGreen, LOW);
-		digitalWrite(pinLEDYellow, LOW);
-		delay(2000);
-		digitalWrite(pinLEDYellow, HIGH);
-		delay(2000);
-		digitalWrite(pinLEDGreen, HIGH);
-		digitalWrite(pinLEDRed, LOW);
-		digitalWrite(pinLEDYellow, LOW);
+	digitalWrite(pinLEDRed, HIGH);
+	digitalWrite(pinLEDGreen, LOW);
+	digitalWrite(pinLEDYellow, LOW);
+	delay(2000);
+	digitalWrite(pinLEDYellow, HIGH);
+	delay(2000);
+	digitalWrite(pinLEDGreen, HIGH);
+	digitalWrite(pinLEDRed, LOW);
+	digitalWrite(pinLEDYellow, LOW);
 }
 
 void greenToRedSequence()
 {
-		digitalWrite(pinLEDGreen, HIGH);
-		digitalWrite(pinLEDRed, LOW);
-		digitalWrite(pinLEDYellow, LOW);
-		delay(2000);
-		digitalWrite(pinLEDGreen, LOW);
-		digitalWrite(pinLEDYellow, HIGH);
-		delay(2000);
-		digitalWrite(pinLEDRed, HIGH);
-		digitalWrite(pinLEDYellow, LOW);
+	digitalWrite(pinLEDGreen, HIGH);
+	digitalWrite(pinLEDRed, LOW);
+	digitalWrite(pinLEDYellow, LOW);
+	delay(2000);
+	digitalWrite(pinLEDGreen, LOW);
+	digitalWrite(pinLEDYellow, HIGH);
+	delay(2000);
+	digitalWrite(pinLEDRed, HIGH);
+	digitalWrite(pinLEDYellow, LOW);
 }
 
 void rollingSequence()
@@ -96,14 +159,4 @@ void rollingSequence()
 		digitalWrite(pinLEDRed, LOW);
 		delay(100);
 	}
-
-}
-
-void loop() {
-	button = digitalRead(pinStartReset);
-	if (button == HIGH)
-	{
-		startSequence();
-	}
-	
 }

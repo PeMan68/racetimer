@@ -23,6 +23,7 @@ int pinLight = A0;
 
 void rollingSequence();
 void startSequence();
+void stopSequence();
 void redToGreenSequence();
 void greenToRedSequence();
 void buttonPress();
@@ -58,7 +59,7 @@ void buttonPress()
 				// race started, just reset
 				Serial.println("Stoppa race, tjuvstart");
 				running = false;
-				greenToRedSequence();
+				stopSequence();
 			}
 			else
 			{
@@ -92,13 +93,35 @@ void loop()
 				Serial.println("Starta nytt race");
 				startSequence();
 				running = true;
-				currentLightValue = analogRead(pinLight);
+				startLightValue = analogRead(pinLight);
 				runningStartTime = millis();
+			}
+		}
+		if (running)
+		// Race running
+		{
+			runningPassedTime = (millis() - runningStartTime) / 100; // Passerade tiondelar
+			minutes = runningPassedTime / 600;
+			seconds = (runningPassedTime - minutes * 600) / 10;
+			tenths = runningPassedTime - minutes * 600 - seconds * 10;
+			currentLightValue = analogRead(pinLight);
+			if ((currentLightValue - startLightValue) * 100 / startLightValue > 10)
+			// lightvalue up 10%
+			{
+				running = false;
+				stopSequence();
+				Serial.println(String(minutes) + ":" + String(seconds) + "," + String(tenths));
 			}
 		}
 	}
 }
 
+void stopSequence()
+{
+	digitalWrite(pinLEDGreen, LOW);
+	digitalWrite(pinLEDYellow, LOW);
+	digitalWrite(pinLEDRed, HIGH);
+}
 void startSequence()
 {
 	// rollingSequence();

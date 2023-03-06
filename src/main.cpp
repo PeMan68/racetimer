@@ -11,8 +11,11 @@ unsigned long tenths;
 bool running = false;
 bool buttonPressed = false;
 bool buttonPressedLong = false;
-int button = LOW;
+int button;
+int lastButtonState = LOW;
 unsigned long buttonPressedStartTime = 0;
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 50; // 50ms debounce filter
 
 int pinStartReset = 2;
 int pinLEDGreen = 3;
@@ -72,48 +75,61 @@ void buttonPress()
 
 void loop()
 {
-	button = digitalRead(pinStartReset);
-	if (button == HIGH)
+	int reading = digitalRead(pinStartReset);
+
+	if (reading != lastButtonState)
 	{
-		buttonPress();
+		lastDebounceTime = millis();
 	}
-	else
+	if ((millis() - lastButtonState) > debounceDelay)
 	{
-
-		if (buttonPressed)
+		if (reading != button)
 		{
-			// button released
-			buttonPressed = false;
-			Serial.println("knapp släppt");
+			button = reading;
+		}
+		if (button == HIGH)
+		{
+			buttonPress();
+		}
+		else
+		{
 
-			if (!running && !buttonPressedLong)
-			// short press
-			// start new race
+			if (buttonPressed)
 			{
-				Serial.println("Starta nytt race");
-				startSequence();
-				running = true;
-				startLightValue = analogRead(pinLight);
-				runningStartTime = millis();
+				// button released
+				buttonPressed = false;
+				Serial.println("knapp släppt");
+
+				if (!running && !buttonPressedLong)
+				// short press
+				// start new race
+				{
+					Serial.println("Starta nytt race");
+					startSequence();
+					running = true;
+					startLightValue = analogRead(pinLight);
+					runningStartTime = millis();
+				}
+			}
+			if (running)
+			// Race running
+			{
+				runningPassedTime = (millis() - runningStartTime) / 100; // Passerade tiondelar
+				minutes = runningPassedTime / 600;
+				seconds = (runningPassedTime - minutes * 600) / 10;
+				tenths = runningPassedTime - minutes * 600 - seconds * 10;
+				currentLightValue = analogRead(pinLight);
+				if ((currentLightValue - startLightValue) * 100 / startLightValue > 10)
+				// lightvalue up 10%
+				{
+					running = false;
+					stopSequence();
+					Serial.println(String(minutes) + ":" + String(seconds) + "," + String(tenths));
+				}
 			}
 		}
-		if (running)
-		// Race running
-		{
-			runningPassedTime = (millis() - runningStartTime) / 100; // Passerade tiondelar
-			minutes = runningPassedTime / 600;
-			seconds = (runningPassedTime - minutes * 600) / 10;
-			tenths = runningPassedTime - minutes * 600 - seconds * 10;
-			currentLightValue = analogRead(pinLight);
-			if ((currentLightValue - startLightValue) * 100 / startLightValue > 10)
-			// lightvalue up 10%
-			{
-				running = false;
-				stopSequence();
-				Serial.println(String(minutes) + ":" + String(seconds) + "," + String(tenths));
-			}
-		}
 	}
+	lastButtonState = reading;
 }
 
 void stopSequence()

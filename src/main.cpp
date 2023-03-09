@@ -8,7 +8,7 @@
 
 // Defining size, and output pins
 #define MAX_DEVICES 4
-#define CS_PIN 3
+#define CS_PIN 6
 
 // Create a new instance of the MD_Parola class with hardware SPI connection
 MD_Parola myDisplay = MD_Parola(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
@@ -52,7 +52,7 @@ void setup()
 	pinMode(pinLEDYellow, OUTPUT);
 	pinMode(pinLEDRed, OUTPUT);
 	Serial.begin(9600); // remove after tests
-		// Intialize the display
+						// Intialize the display
 	myDisplay.begin();
 
 	// Set the intensity (brightness) of the display (0-15)
@@ -82,6 +82,8 @@ void buttonPress()
 			if (running)
 			{
 				// race started, just reset
+				myDisplay.setTextAlignment(PA_RIGHT);
+				myDisplay.print("STOPPA RACE");
 				Serial.println("Stoppa race, tjuvstart");
 				running = false;
 				stopSequence();
@@ -141,6 +143,11 @@ void loop()
 				seconds = (runningPassedTime - minutes * 600) / 10;
 				tenths = runningPassedTime - minutes * 600 - seconds * 10;
 				currentLightValue = analogRead(pinLight);
+				if (seconds > 2)
+				{
+					myDisplay.setTextAlignment(PA_LEFT);
+					myDisplay.print(String(minutes) + ":" + String(seconds) + "," + String(tenths));
+				}
 				if ((currentLightValue - startLightValue) * 100 / startLightValue > 10)
 				// lightvalue up 10%
 				{
@@ -152,7 +159,7 @@ void loop()
 		}
 	}
 	lastButtonState = reading;
-	displayTest();
+	// displayTest();
 }
 
 void stopSequence()
@@ -183,12 +190,20 @@ void redToGreenSequence()
 	digitalWrite(pinLEDRed, HIGH);
 	digitalWrite(pinLEDGreen, LOW);
 	digitalWrite(pinLEDYellow, LOW);
+
+	myDisplay.setTextAlignment(PA_CENTER);
+	myDisplay.print("KLARA...");
+
 	delay(2000);
 	digitalWrite(pinLEDYellow, HIGH);
+	myDisplay.setTextAlignment(PA_CENTER);
+	myDisplay.print("FÄRDIGA");
 	delay(2000);
 	digitalWrite(pinLEDGreen, HIGH);
 	digitalWrite(pinLEDRed, LOW);
 	digitalWrite(pinLEDYellow, LOW);
+	myDisplay.setTextAlignment(PA_CENTER);
+	myDisplay.print("GÅ!");
 }
 
 void greenToRedSequence()
@@ -221,7 +236,6 @@ void rollingSequence()
 		digitalWrite(pinLEDRed, LOW);
 		delay(100);
 	}
-
 }
 
 void displayTest()
@@ -229,7 +243,7 @@ void displayTest()
 	myDisplay.setTextAlignment(PA_LEFT);
 	myDisplay.print("Left");
 	delay(2000);
-	
+
 	myDisplay.setTextAlignment(PA_CENTER);
 	myDisplay.print("Center");
 	delay(2000);

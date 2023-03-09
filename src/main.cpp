@@ -1,5 +1,18 @@
 #include <Arduino.h>
 
+#include <MD_Parola.h>
+#include <MD_MAX72xx.h>
+#include <SPI.h>
+
+#define HARDWARE_TYPE MD_MAX72XX::FC16_HW
+
+// Defining size, and output pins
+#define MAX_DEVICES 4
+#define CS_PIN 3
+
+// Create a new instance of the MD_Parola class with hardware SPI connection
+MD_Parola myDisplay = MD_Parola(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
+
 long currentLightValue = 0;
 long startLightValue = 0;
 unsigned long runningStartTime;
@@ -30,6 +43,7 @@ void stopSequence();
 void redToGreenSequence();
 void greenToRedSequence();
 void buttonPress();
+void displayTest();
 
 void setup()
 {
@@ -38,6 +52,14 @@ void setup()
 	pinMode(pinLEDYellow, OUTPUT);
 	pinMode(pinLEDRed, OUTPUT);
 	Serial.begin(9600); // remove after tests
+		// Intialize the display
+	myDisplay.begin();
+
+	// Set the intensity (brightness) of the display (0-15)
+	myDisplay.setIntensity(0);
+
+	// Clear the display
+	myDisplay.displayClear();
 }
 
 void buttonPress()
@@ -130,6 +152,7 @@ void loop()
 		}
 	}
 	lastButtonState = reading;
+	displayTest();
 }
 
 void stopSequence()
@@ -198,4 +221,29 @@ void rollingSequence()
 		digitalWrite(pinLEDRed, LOW);
 		delay(100);
 	}
+
+}
+
+void displayTest()
+{
+	myDisplay.setTextAlignment(PA_LEFT);
+	myDisplay.print("Left");
+	delay(2000);
+	
+	myDisplay.setTextAlignment(PA_CENTER);
+	myDisplay.print("Center");
+	delay(2000);
+
+	myDisplay.setTextAlignment(PA_RIGHT);
+	myDisplay.print("Right");
+	delay(2000);
+
+	myDisplay.setTextAlignment(PA_CENTER);
+	myDisplay.setInvert(true);
+	myDisplay.print("Invert");
+	delay(2000);
+
+	myDisplay.setInvert(false);
+	myDisplay.print(1234);
+	delay(2000);
 }

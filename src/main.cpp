@@ -20,17 +20,19 @@ unsigned long runningPassedTime;
 unsigned long minutes;
 unsigned long seconds;
 unsigned long tenths;
+String raceTime1 = "";
+String raceTime2 = "";
 
 bool running = false;
 bool buttonPressed = false;
 bool buttonPressedLong = false;
-int button;
-int lastButtonState = LOW;
-unsigned long buttonPressedStartTime = 0;
-unsigned long lastDebounceTime = 0;
-unsigned long debounceDelay = 50; // 50ms debounce filter
+// int button;
+// int lastButtonState = LOW;
+// unsigned long buttonPressedStartTime = 0;
+// unsigned long lastDebounceTime = 0;
+// unsigned long debounceDelay = 50; // 50ms debounce filter
 
-int pinStartReset = 2;
+int pinStart = 2;
 int pinStop1 = 3;
 int pinStop2 = 4;
 int pinLEDGreen = 5;
@@ -48,9 +50,37 @@ void buttonPress();
 void displayTest();
 String makeString(long int a, long int b, long int c);
 
+unsigned int debounceDelay = 50; // Ange en lämplig debounce-fördröjning (i millisekunder)
+
+int buttonState;					// Aktuell knappstatus
+int lastButtonState = LOW;			// Senaste knappstatus
+unsigned long lastDebounceTime = 0; // Tidpunkt för senaste debounce
+
+// Funktion för debounce av knapptryckning
+int debounce(int buttonPin)
+{
+	int reading = digitalRead(buttonPin); // Läs av knappens status
+	if (reading != lastButtonState)
+	{								 // Om knappstatusen har ändrats
+		lastDebounceTime = millis(); // Uppdatera senaste debounce-tidpunkt
+	}
+	if ((millis() - lastDebounceTime) > debounceDelay)
+	{ // Om det har gått tillräckligt med tid sedan senaste debounce
+		if (reading != buttonState)
+		{						   // Om det är en ny knapptryckning
+			buttonState = reading; // Uppdatera aktuell knappstatus
+			return buttonState;	   // Returnera aktuell knappstatus
+		}
+	}
+	lastButtonState = reading; // Spara senaste knappstatus
+	return -1;				   // Om ingen ny knapptryckning har detekterats
+}
+
 void setup()
 {
-	pinMode(pinStartReset, INPUT);
+	pinMode(pinStart, INPUT);
+	pinMode(pinStop1, INPUT);
+	pinMode(pinStop2, INPUT);
 	pinMode(pinLEDGreen, OUTPUT);
 	pinMode(pinLEDYellow, OUTPUT);
 	pinMode(pinLEDRed, OUTPUT);
@@ -65,107 +95,120 @@ void setup()
 	myDisplay.displayClear();
 }
 
-void buttonPress()
-{
-	if (!buttonPressed)
-	{
-		// button pressed
-		buttonPressed = true;
-		buttonPressedLong = false;
-		buttonPressedStartTime = millis();
-		Serial.println("knapp tryckt");
-	}
-	else
-	{
-		if (!buttonPressedLong && millis() - buttonPressedStartTime > 2000)
-		{
-			// long press
-			buttonPressedLong = true;
-			// buttonPressed = false;
-			if (running)
-			{
-				// race started, just reset
-				myDisplay.setTextAlignment(PA_RIGHT);
-				myDisplay.print("STOPPA RACE");
-				Serial.println("Stoppa race, tjuvstart");
-				running = false;
-				stopSequence();
-			}
-			else
-			{
-				// delete previous racetime
-				Serial.println("Radera föregånde racetid");
-			}
-		}
-	}
-}
+// void loop_old()
+// {
+// 	int reading = digitalRead(pinStart);
+
+// 	if (reading != lastButtonState)
+// 	{
+// 		lastDebounceTime = millis();
+// 	}
+// 	if ((millis() - lastButtonState) > debounceDelay)
+// 	{
+// 		if (reading != button)
+// 		{
+// 			button = reading;
+// 		}
+// 		if (button == HIGH)
+// 		{
+// 			buttonPress();
+// 		}
+// 		else
+// 		{
+
+// 			if (buttonPressed)
+// 			{
+// 				// button released
+// 				buttonPressed = false;
+// 				Serial.println("knapp släppt");
+
+// 				if (!running && !buttonPressedLong)
+// 				// short press
+// 				// start new race
+// 				{
+// 					Serial.println("Starta nytt race");
+// 					startSequence();
+// 					running = true;
+// 					startLightValue = analogRead(pinLight);
+// 					runningStartTime = millis();
+// 				}
+// 			}
+// 			if (running)
+// 			// Race running
+// 			{
+// 				runningPassedTime = (millis() - runningStartTime) / 100; // Passerade tiondelar
+// 				minutes = runningPassedTime / 600;
+// 				seconds = (runningPassedTime - minutes * 600) / 10;
+// 				tenths = runningPassedTime - minutes * 600 - seconds * 10;
+// 				currentLightValue = analogRead(pinLight);
+// 				if (runningPassedTime > 20)
+// 				{
+// 					myDisplay.setTextAlignment(PA_LEFT);
+// 					String result = makeString(minutes, seconds, tenths);
+// 					myDisplay.print(result);
+// 					// myDisplay.print(String(minutes) + ":" + String(seconds) + "," + String(tenths));
+// 				}
+// 				if ((currentLightValue - startLightValue) * 100 / startLightValue > 10)
+// 				// lightvalue up 10%
+// 				{
+// 					running = false;
+// 					stopSequence();
+// 					String result = makeString(minutes, seconds, tenths);
+// 					Serial.println(result);
+// 				}
+// 			}
+// 		}
+// 	}
+// 	lastButtonState = reading;
+// 	// displayTest();
+// }
 
 void loop()
 {
-	int reading = digitalRead(pinStartReset);
-
-	if (reading != lastButtonState)
+	if (running)
 	{
-		lastDebounceTime = millis();
-	}
-	if ((millis() - lastButtonState) > debounceDelay)
-	{
-		if (reading != button)
+		// sub Visa tid
+		if (1) // knapp stopp1 och inte lagrad tid för 1
 		{
-			button = reading;
-		}
-		if (button == HIGH)
-		{
-			buttonPress();
+			// Sub Lagra tid#1
 		}
 		else
 		{
-
-			if (buttonPressed)
+			if (1) // knapp stopp2 och inte lagrad tid för 2
 			{
-				// button released
-				buttonPressed = false;
-				Serial.println("knapp släppt");
-
-				if (!running && !buttonPressedLong)
-				// short press
-				// start new race
-				{
-					Serial.println("Starta nytt race");
-					startSequence();
-					running = true;
-					startLightValue = analogRead(pinLight);
-					runningStartTime = millis();
-				}
+				// Sub Lagra tid#2
 			}
-			if (running)
-			// Race running
+			else
 			{
-				runningPassedTime = (millis() - runningStartTime) / 100; // Passerade tiondelar
-				minutes = runningPassedTime / 600;
-				seconds = (runningPassedTime - minutes * 600) / 10;
-				tenths = runningPassedTime - minutes * 600 - seconds * 10;
-				currentLightValue = analogRead(pinLight);
-				if (runningPassedTime > 20)
-				{
-					myDisplay.setTextAlignment(PA_LEFT);
-					String result = makeString(minutes, seconds, tenths);
-					myDisplay.print(result);
-					// myDisplay.print(String(minutes) + ":" + String(seconds) + "," + String(tenths));
-				}
-				if ((currentLightValue - startLightValue) * 100 / startLightValue > 10)
-				// lightvalue up 10%
+				// Båda i mål?
+				if (1)
 				{
 					running = false;
-					stopSequence();
-					String result = makeString(minutes, seconds, tenths);
-					Serial.println(result);
+				}
+				else
+				{
+					// sub växla diplay mellan runtimer och första måltid
 				}
 			}
 		}
 	}
-	lastButtonState = reading;
-	// displayTest();
+	else
+	{
+		// Startknapp tryckt??
+		int buttonStatus = debounce(pinStart); // Anropa debounce-funktionen med knappens pinnummer som argument
+		if (buttonStatus == HIGH)
+		{ // Om en knapptryckning har detekterats
+
+			// starta race
+			Serial.println("starta race");
+			running = true;
+		}
+		else
+		{
+			// Sub visa senaste lagrade tider
+			Serial.println("Sub visa senaste lagrade tider");
+		}
+	}
 }
 
 String makeString(long int a, long int b, long int c)
@@ -180,9 +223,44 @@ String makeString(long int a, long int b, long int c)
 	}
 	result += String(b);
 	result += ".";
-	result += String(c) ;
+	result += String(c);
 	return result;
 }
+
+// // void buttonPress()
+// {
+// 	if (!buttonPressed)
+// 	{
+// 		// button pressed
+// 		buttonPressed = true;
+// 		buttonPressedLong = false;
+// 		buttonPressedStartTime = millis();
+// 		Serial.println("knapp tryckt");
+// 	}
+// 	else
+// 	{
+// 		if (!buttonPressedLong && millis() - buttonPressedStartTime > 2000)
+// 		{
+// 			// long press
+// 			buttonPressedLong = true;
+// 			// buttonPressed = false;
+// 			if (running)
+// 			{
+// 				// race started, just reset
+// 				myDisplay.setTextAlignment(PA_RIGHT);
+// 				myDisplay.print("STOPPA RACE");
+// 				Serial.println("Stoppa race, tjuvstart");
+// 				running = false;
+// 				stopSequence();
+// 			}
+// 			else
+// 			{
+// 				// delete previous racetime
+// 				Serial.println("Radera föregånde racetid");
+// 			}
+// 		}
+// 	}
+// }
 
 void stopSequence()
 {

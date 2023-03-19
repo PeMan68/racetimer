@@ -44,6 +44,7 @@ void redToGreenSequence();
 void greenToRedSequence();
 void buttonPress();
 void displayTest();
+String makeString(long int a, long int b, long int c);
 
 void setup()
 {
@@ -143,23 +144,42 @@ void loop()
 				seconds = (runningPassedTime - minutes * 600) / 10;
 				tenths = runningPassedTime - minutes * 600 - seconds * 10;
 				currentLightValue = analogRead(pinLight);
-				if (seconds > 2)
+				if (runningPassedTime > 20)
 				{
 					myDisplay.setTextAlignment(PA_LEFT);
-					myDisplay.print(String(minutes) + ":" + String(seconds) + "," + String(tenths));
+					String result = makeString(minutes, seconds, tenths);
+					myDisplay.print(result);
+					// myDisplay.print(String(minutes) + ":" + String(seconds) + "," + String(tenths));
 				}
 				if ((currentLightValue - startLightValue) * 100 / startLightValue > 10)
 				// lightvalue up 10%
 				{
 					running = false;
 					stopSequence();
-					Serial.println(String(minutes) + ":" + String(seconds) + "," + String(tenths));
+					String result = makeString(minutes, seconds, tenths);
+					Serial.println(result);
 				}
 			}
 		}
 	}
 	lastButtonState = reading;
 	// displayTest();
+}
+
+String makeString(long int a, long int b, long int c)
+{
+	String result = "";
+
+	result += String(a);
+	result += ":";
+	if (b < 10)
+	{
+		result += "0";
+	}
+	result += String(b);
+	result += ".";
+	result += String(c) ;
+	return result;
 }
 
 void stopSequence()
@@ -192,18 +212,18 @@ void redToGreenSequence()
 	digitalWrite(pinLEDYellow, LOW);
 
 	myDisplay.setTextAlignment(PA_CENTER);
-	myDisplay.print("KLARA...");
+	myDisplay.print("READY!");
 
 	delay(2000);
 	digitalWrite(pinLEDYellow, HIGH);
 	myDisplay.setTextAlignment(PA_CENTER);
-	myDisplay.print("FÄRDIGA");
+	myDisplay.print("STEADY");
 	delay(2000);
 	digitalWrite(pinLEDGreen, HIGH);
 	digitalWrite(pinLEDRed, LOW);
 	digitalWrite(pinLEDYellow, LOW);
 	myDisplay.setTextAlignment(PA_CENTER);
-	myDisplay.print("GÅ!");
+	myDisplay.print("GO!");
 }
 
 void greenToRedSequence()

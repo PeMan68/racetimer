@@ -13,8 +13,8 @@
 // Create a new instance of the MD_Parola class with hardware SPI connection
 MD_Parola myDisplay = MD_Parola(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
 
-long currentLightValue = 0;
-long startLightValue = 0;
+// long currentLightValue = 0;
+// long startLightValue = 0;
 unsigned long runningStartTime;
 unsigned long runningPassedTime;
 unsigned long lastRunningPastTime;
@@ -23,6 +23,7 @@ unsigned long seconds;
 unsigned long tenths;
 String raceTime1 = "";
 String raceTime2 = "";
+bool toggleResults = true;
 
 bool running = false;
 bool buttonPressed = false;
@@ -165,7 +166,7 @@ void setup()
 // }
 unsigned long getPassedTime()
 {
-	return (millis() - runningStartTime) / 100; // Passerade tiondelar
+	return (millis() - runningStartTime) / 100; // Passerade tiondelar sedan start
 }
 
 String makeStringFromTime(unsigned long a)
@@ -204,36 +205,39 @@ void updateDisplayWithTime()
 	}
 }
 
-
 void loop()
 {
 	if (running)
 	{
 		// sub Visa tid
 		updateDisplayWithTime();
-		int buttonStatus = debounce(pinStop1);		 // Anropa debounce-funktionen med knappens pinnummer som argument
-		if (buttonStatus == HIGH && raceTime1 == "") // knapp stopp1 och inte lagrad tid för 1
+		int buttonStatus1 = digitalRead(pinStop1);	  // Anropa debounce-funktionen med knappens pinnummer som argument
+		if (buttonStatus1 == HIGH && raceTime1 == "") // knapp stopp1 och inte lagrad tid för 1
 		{
 			// Sub Lagra tid#1
 			raceTime1 = makeStringFromTime(runningPassedTime);
-			Serial.println(raceTime1);
+			Serial.println("tid1: " + raceTime1);
 		}
 		else
 		{
-			if (1) // knapp stopp2 och inte lagrad tid för 2
+			int buttonStatus2 = digitalRead(pinStop2);	  // Anropa debounce-funktionen med knappens pinnummer som argument
+			if (buttonStatus2 == HIGH && raceTime2 == "") // knapp stopp2 och inte lagrad tid för 2
 			{
 				// Sub Lagra tid#2
+				raceTime2 = makeStringFromTime(runningPassedTime);
+				Serial.println("tid2: " + raceTime2);
 			}
 			else
 			{
 				// Båda i mål?
-				if (1)
+				if (raceTime1 != "" && raceTime2 != "")
 				{
 					running = false;
+					stopSequence();
 				}
 				else
 				{
-					// sub växla diplay mellan runtimer och första måltid
+					// Serial.println("sub växla diplay mellan runtimer och första måltid");
 				}
 			}
 		}
@@ -247,14 +251,35 @@ void loop()
 
 			// starta race
 			Serial.println("starta race");
-			startSequence();
+			redToGreenSequence();
 			running = true;
+			raceTime1 = "";
+			raceTime2 = "";
 			runningStartTime = millis();
 		}
 		else
 		{
 			// Sub visa senaste lagrade tider
-			Serial.println("Sub visa senaste lagrade tider");
+			// Serial.println("Sub visa senaste lagrade tider");
+			if (raceTime1 != "" || raceTime2 != "")
+			{
+				if (myDisplay.displayAnimate() && toggleResults)
+				{
+					toggleResults = !toggleResults;
+					myDisplay.displayClear();
+					char myChar[raceTime1.length() + 1]; // +1 for null terminator
+					raceTime1.toCharArray(myChar, sizeof(myChar));
+					myDisplay.displayText("BANA 1: 1:10.4", PA_LEFT, 50, 1000, PA_SCROLL_LEFT, PA_SCROLL_LEFT);
+					myDisplay.displayReset();
+				}
+				if (myDisplay.displayAnimate())
+				{
+					toggleResults = !toggleResults;
+					myDisplay.displayClear();
+					myDisplay.displayText("BANA 2: 0:58.2", PA_LEFT, 50, 1000, PA_SCROLL_LEFT, PA_SCROLL_LEFT);
+					myDisplay.displayReset();
+				}
+			}
 		}
 	}
 }
@@ -314,7 +339,7 @@ void stopSequence()
 {
 	digitalWrite(pinLEDGreen, LOW);
 	digitalWrite(pinLEDYellow, LOW);
-	digitalWrite(pinLEDRed, HIGH);
+	digitalWrite(pinLEDRed, LOW);
 }
 void startSequence()
 {

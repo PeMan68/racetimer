@@ -17,6 +17,7 @@ long currentLightValue = 0;
 long startLightValue = 0;
 unsigned long runningStartTime;
 unsigned long runningPassedTime;
+unsigned long lastRunningPastTime;
 unsigned long minutes;
 unsigned long seconds;
 unsigned long tenths;
@@ -162,15 +163,60 @@ void setup()
 // 	lastButtonState = reading;
 // 	// displayTest();
 // }
+unsigned long getPassedTime()
+{
+	return (millis() - runningStartTime) / 100; // Passerade tiondelar
+}
+
+String makeStringFromTime(unsigned long a)
+{
+	minutes = a / 600;
+	seconds = (a - minutes * 600) / 10;
+	tenths = a - minutes * 600 - seconds * 10;
+	String result = "";
+
+	result += String(minutes);
+	result += ":";
+	if (seconds < 10)
+	{
+		result += "0";
+	}
+	result += String(seconds);
+	result += ".";
+	result += String(tenths);
+	return result;
+}
+
+void updateDisplayWithTime()
+{
+	runningPassedTime = getPassedTime(); // Passerade tiondelar
+	// minutes = runningPassedTime / 600;
+	// seconds = (runningPassedTime - minutes * 600) / 10;
+	// tenths = runningPassedTime - minutes * 600 - seconds * 10;
+	if (runningPassedTime > 20 && runningPassedTime != lastRunningPastTime)
+	{
+		myDisplay.setTextAlignment(PA_LEFT);
+		// String result = makeString(minutes, seconds, tenths);
+		String result = makeStringFromTime(runningPassedTime);
+		myDisplay.print(result);
+		// Serial.println(runningPassedTime);
+		lastRunningPastTime = runningPassedTime;
+	}
+}
+
 
 void loop()
 {
 	if (running)
 	{
 		// sub Visa tid
-		if (1) // knapp stopp1 och inte lagrad tid för 1
+		updateDisplayWithTime();
+		int buttonStatus = debounce(pinStop1);		 // Anropa debounce-funktionen med knappens pinnummer som argument
+		if (buttonStatus == HIGH && raceTime1 == "") // knapp stopp1 och inte lagrad tid för 1
 		{
 			// Sub Lagra tid#1
+			raceTime1 = makeStringFromTime(runningPassedTime);
+			Serial.println(raceTime1);
 		}
 		else
 		{
@@ -201,7 +247,9 @@ void loop()
 
 			// starta race
 			Serial.println("starta race");
+			startSequence();
 			running = true;
+			runningStartTime = millis();
 		}
 		else
 		{

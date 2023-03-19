@@ -8,7 +8,7 @@
 
 // Defining size, and output pins
 #define MAX_DEVICES 4
-#define CS_PIN 6
+#define CS_PIN 10
 
 // Create a new instance of the MD_Parola class with hardware SPI connection
 MD_Parola myDisplay = MD_Parola(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
@@ -31,9 +31,11 @@ unsigned long lastDebounceTime = 0;
 unsigned long debounceDelay = 50; // 50ms debounce filter
 
 int pinStartReset = 2;
-int pinLEDGreen = 3;
-int pinLEDYellow = 4;
-int pinLEDRed = 5;
+int pinStop1 = 3;
+int pinStop2 = 4;
+int pinLEDGreen = 5;
+int pinLEDYellow = 6;
+int pinLEDRed = 7;
 
 int pinLight = A0;
 
